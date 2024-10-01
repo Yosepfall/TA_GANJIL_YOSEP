@@ -24,7 +24,7 @@
 <style>
     /* Sidebar styling */
     #accordionSidebar {
-        position: fixed;
+        position: relative;
         top: 0;
         left: 0;
         height: 100vh;
@@ -32,6 +32,7 @@
         overflow-y: auto;
         transition: transform 0.5s ease-in-out;
         transform: translateX(0); /* Default position */
+        z-index: 99;
     }
 
     /* Sidebar hidden */
@@ -55,31 +56,52 @@
     .sidebar-toggled #content-wrapper {
         margin-left: 0; /* Content fills the width */
     }
-</style>
+/* Hide the sidebar using translation (not display: none) */
+.sidebar-hidden {
+    transform: translateX(-250px); /* Shift sidebar out of view */
+    transition: transform 0.3s ease; /* Smooth transition */    
+}
 
+/* Ensure content expands to full width when sidebar is hidden */
+.full-width {
+    margin-left: 0 !important;
+    width: 100%; /* Expand content to full width */
+    transition: width 0.3s ease; /* Smooth transition */
+}
+
+
+
+</style>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const sidebar = document.getElementById('accordionSidebar');
         const contentWrapper = document.getElementById('content-wrapper');
         const sidebarToggle = document.getElementById('sidebarToggleTop');
 
+        // Initially hide the sidebar when the page is first loaded or refreshed
+        sidebar.classList.add('sidebar-hidden');
+
+        // Add event listener for the toggle button
         sidebarToggle.addEventListener('click', function () {
-            sidebar.classList.toggle('sidebar-toggled');
-            contentWrapper.classList.toggle('sidebar-toggled');
+            sidebar.classList.toggle('sidebar-hidden');
+            contentWrapper.classList.toggle('full-width');  // Adjust the content width
         });
     });
 </script>
 
 
 
+
+
+
   
-<body id="page-top">
+<body id="page-top" class="sidebar-toggled">
 
     <!-- Page Wrapper -->
     <div id="wrapper">
 
         <!-- Sidebar -->
-        <ul class="navbar-nav bg-white sidebar sidebar-whitw accordion" id="accordionSidebar" style="height: 100vh; width: 160px;">
+        <ul class="navbar-nav bg-white sidebar toggled sidebar-whitw accordion" id="accordionSidebar" style="height: 100vh; width: 160px;">
 
             <!-- Sidebar - Brand -->
             <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
@@ -107,7 +129,7 @@
             <!-- Heading -->
             <!-- Nav Item - Pages Collapse Menu -->
             <li class="nav-item" style="color: #808080;">
-                <a class="nav-link collapsed" href="#" style="color: #808080;">
+                <a class="nav-link collapsed" href="login" style="color: #808080;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#808080" class="bi bi-house-door-fill" viewBox="0 0 16 16">
                         <path d="M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5"/>
                     </svg>
@@ -187,19 +209,25 @@
                     </button>
 
                     <!-- Topbar Search -->
-                    <form
-                        class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-light border-1 small" placeholder="Search for..."
-                                aria-label="Search" aria-describedby="basic-addon2">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="button">
-                                    <i class="fas fa-search fa-sm"></i>
-                                </button>
+            
+                    <div class="container mt-3">
+                        <div class="col-lg-5">
+                            <div class="input-group">
+                                <input type="text" id="searchKodeBuku" class="form-control" placeholder="Cari Kode Buku..." onkeyup="searchBooks()">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="button" onclick="searchBooks()">Search</button>
+                                </div>
+                            </div>
+                            <div class="dropdown-menu" id="kodeBukuDropdown" style="display: none;">
+                                @foreach($buku as $b)
+                                    <a href="{{ url('buku/' . $b->kode_buku) }}" class="dropdown-item kode-buku-item">
+                                        {{ $b->kode_buku }} - {{ $b->judul }}
+                                    </a>
+                                @endforeach
                             </div>
                         </div>
-                    </form>
-
+                    </div>
+                    
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
@@ -383,6 +411,35 @@
                 <!-- End of Topbar -->
 
                 <div class="container-fluid">
+                    <div class="col-lg 8">
+                        <div class="card shadow mb-4">
+                            <!-- Card Body -->
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap justify-content-start">
+                                    @foreach ($buku as $b)
+                                        @if ($b) <!-- Check if $b is valid -->
+                                            <div class="card m-2" style="width: 180px;">
+                                                <div class="card-body text-center">
+                                                    @if ($b->data_gambar)
+                                                        <img src="data:image/jpeg;base64,{{ base64_encode($b->data_gambar) }}"
+                                                            alt="{{ $b->nama_file }}"
+                                                            class="img-fluid mb-2"
+                                                            style="width: 120px; height: 150px; cursor: pointer; border-radius: 20px">
+                                                        <div class="card-title mt-2">{{ $b->judul }}</div>     <a href="{{ url('buku/' . $b->kode_buku) }}" class="btn btn-primary btn-sm mt-2">Pinjam</a>
+                                                    @else
+                                                        <p>No image</p>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div class="container-fluid">
                     <div class="col-lg 12">
                         <div class="card shadow mb-3">
                             <!-- Card Body -->
@@ -396,7 +453,7 @@
                                                         <img src="data:image/jpeg;base64,{{ base64_encode($b->data_gambar) }}"
                                                             alt="{{ $b->nama_file }}"
                                                             class="img-fluid mb-2"
-                                                            style="width: 100px; height: 150px; cursor: pointer;">
+                                                            style="width: 120px; height: 150px; cursor: pointer; border-radius: 20px">
                                                         <div class="card-title mt-2">{{ $b->judul }}</div>
                                                         <a href="{{ url('buku/' . $b->kode_buku) }}" class="btn btn-primary btn-sm mt-2">Detail</a>
                                                     @else
@@ -411,7 +468,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
                 
                     <style>
   .card-body {
@@ -437,47 +493,47 @@
        
                     </style>
                     <!-- Content Row -->
-                    <div class="row">
-                
-                        <!-- Content Column -->
-                        <div class="col-12">
-                
-                            <!-- Project Card Example -->
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3">
-                                    <h6 class="m-0 font-weight-bold text-primary">Projects</h6>
-                                </div>
-                                <div class="card-body">
-                                    <h4 class="small font-weight-bold">Server Migration <span class="float-right">20%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"
-                                            aria-valuenow="20" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Sales Tracking <span class="float-right">40%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%"
-                                            aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Customer Database <span class="float-right">60%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar" role="progressbar" style="width: 60%"
-                                            aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Payout Details <span class="float-right">80%</span></h4>
-                                    <div class="progress mb-4">
-                                        <div class="progress-bar bg-info" role="progressbar" style="width: 80%"
-                                            aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                    <h4 class="small font-weight-bold">Account Setup <span class="float-right">Complete!</span></h4>
-                                    <div class="progress">
-                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%"
-                                            aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
-                                </div>
-                            </div>
-                
-                        </div>
-                    </div>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            // Close dropdown when clicking outside the search bar
+                            document.addEventListener('click', function(event) {
+                                const searchInput = document.getElementById('searchKodeBuku');
+                                const dropdown = document.getElementById('kodeBukuDropdown');
+                                
+                                if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
+                                    dropdown.style.display = 'none';
+                                }
+                            });
+                        });
+                        
+                        function searchBooks() {
+                            let input = document.getElementById('searchKodeBuku').value.toLowerCase();
+                            let dropdown = document.getElementById('kodeBukuDropdown');
+                            let items = dropdown.getElementsByClassName('kode-buku-item');
+                            
+                            let found = false;
+                        
+                            // Hide dropdown if input is cleared
+                            if (input === "") {
+                                dropdown.style.display = "none";
+                                return;
+                            }
+                        
+                            // Loop through all dropdown items and hide those that don't match the input
+                            for (let i = 0; i < items.length; i++) {
+                                let itemText = items[i].textContent.toLowerCase();
+                                if (itemText.includes(input)) {
+                                    items[i].style.display = "block";
+                                    found = true;
+                                } else {
+                                    items[i].style.display = "none";
+                                }
+                            }
+                        
+                            // Show dropdown if matching results are found, otherwise hide it
+                            dropdown.style.display = found ? "block" : "none";
+                        }
+                        </script>
                 </div>
                 
                         </div>

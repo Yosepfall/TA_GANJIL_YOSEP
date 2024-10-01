@@ -48,9 +48,10 @@ class BookController extends Controller
             'data_gambar' => $dataGambar
         ]);
 
-        return redirect()->route('buku.index')
+        return redirect()->route('index')
             ->with('success', 'Buku berhasil ditambahkan');
     }
+
 
 
     // Menampilkan detail buku berdasarkan kode_buku
@@ -68,5 +69,15 @@ class BookController extends Controller
             'buku' => $buku,
             'gambar' => $buku->data_gambar // Menyediakan gambar binary
         ]);
+    }
+    public function search(Request $request)
+    {
+        $searchTerm = $request->input('search');
+
+        // Search for books based on the kode_buku
+        $buku = Buku::where('kode_buku', 'LIKE', "%{$searchTerm}%")->get();
+
+        // Return the view with the search results
+        return view('index', compact('buku'));
     }
 }
